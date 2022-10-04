@@ -9,33 +9,61 @@ camera = cv2.VideoCapture(0)
 def nothing(x):
     pass
 
-with open('red_hsv.json', 'r') as openfile:
- 
-    # Reading from json file
-    red_hsv = json.load(openfile)
-
+hsv_empty = {
+    "H_Lower" : 0,
+    "H_Higher" : 0,
+    "S_Lower" : 0,
+    "S_Higher" : 0,
+    "V_Lower" : 0,
+    "V_Higher" : 0,
+}
+circle_empty = {
+    "min_radius" : 0,
+    "max_radius" : 0,
+    "param1" : 0,
+    "param2" : 0,
+    "param3" : 0,
+    "param4" : 0,
+}
+canny_empty = {
+    "min_radius" : 0,
+    "max_radius" : 0,
+    "param1" : 0,
+    "param2" : 0,
+    "param3" : 0,
+    "param4" : 0,
+}
+object_hsv_path = 'object_hsv.json'
 mask_hsv_path = 'mask_hsv.json'
+circle_params_path = 'circle_params.json'
+canny_params_path = 'canny_params.json'
+
+if path.exists(object_hsv_path):
+    with open(object_hsv_path, 'r') as openfile:
+        object_hsv = json.load(openfile)
+else:
+    object_hsv = hsv_empty
+
 if path.exists(mask_hsv_path):
     with open(mask_hsv_path, 'r') as openfile:
-    
-        # Reading from json file
         mask_hsv = json.load(openfile)
 else:
-    mask_hsv = red_hsv
+    mask_hsv = hsv_empty
 
-with open('circle_params.json', 'r') as openfile:
- 
-    # Reading from json file
-    circle_params = json.load(openfile)
+if path.exists(circle_params_path):
+    with open(circle_params_path, 'r') as openfile:
+        circle_params = json.load(openfile)
+else:
+    circle_params = circle_empty
 
 
 cv2.namedWindow('hsv red')
-cv2.createTrackbar('H Lower','hsv',red_hsv['H_Lower'],179,nothing)
-cv2.createTrackbar('H Higher','hsv',red_hsv['H_Higher'],179,nothing)
-cv2.createTrackbar('S Lower','hsv',red_hsv['S_Lower'],255,nothing)
-cv2.createTrackbar('S Higher','hsv',red_hsv['S_Higher'],255,nothing)
-cv2.createTrackbar('V Lower','hsv',red_hsv['V_Lower'],255,nothing)
-cv2.createTrackbar('V Higher','hsv',red_hsv['V_Higher'],255,nothing)
+cv2.createTrackbar('H Lower','hsv',object_hsv['H_Lower'],179,nothing)
+cv2.createTrackbar('H Higher','hsv',object_hsv['H_Higher'],179,nothing)
+cv2.createTrackbar('S Lower','hsv',object_hsv['S_Lower'],255,nothing)
+cv2.createTrackbar('S Higher','hsv',object_hsv['S_Higher'],255,nothing)
+cv2.createTrackbar('V Lower','hsv',object_hsv['V_Lower'],255,nothing)
+cv2.createTrackbar('V Higher','hsv',object_hsv['V_Higher'],255,nothing)
 
 cv2.namedWindow('hsv mask')
 cv2.createTrackbar('H Lower','mask',mask_hsv['H_Lower'],179,nothing)
@@ -63,18 +91,21 @@ while(1):
 
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-    red_hL = cv2.getTrackbarPos('H Lower','hsv')
-    red_hH = cv2.getTrackbarPos('H Higher','hsv')
-    red_sL = cv2.getTrackbarPos('S Lower','hsv')
-    red_sH = cv2.getTrackbarPos('S Higher','hsv')
-    red_vL = cv2.getTrackbarPos('V Lower','hsv')
-    red_vH = cv2.getTrackbarPos('V Higher','hsv')
+    #object
+    object_hL = cv2.getTrackbarPos('H Lower','hsv')
+    object_hH = cv2.getTrackbarPos('H Higher','hsv')
+    object_sL = cv2.getTrackbarPos('S Lower','hsv')
+    object_sH = cv2.getTrackbarPos('S Higher','hsv')
+    object_vL = cv2.getTrackbarPos('V Lower','hsv')
+    object_vH = cv2.getTrackbarPos('V Higher','hsv')
+    
     mask_hL = cv2.getTrackbarPos('H Lower','mask')
     mask_hH = cv2.getTrackbarPos('H Higher','mask')
     mask_sL = cv2.getTrackbarPos('S Lower','mask')
     mask_sH = cv2.getTrackbarPos('S Higher','mask')
     mask_vL = cv2.getTrackbarPos('V Lower','mask')
     mask_vH = cv2.getTrackbarPos('V Higher','mask')
+    
     minRadius = cv2.getTrackbarPos('Min Radius','circle')
     maxRadius = cv2.getTrackbarPos('Max Radius','circle')
     param1 = cv2.getTrackbarPos('param1','circle')
@@ -82,13 +113,13 @@ while(1):
     param3 = cv2.getTrackbarPos('dp','circle')
     param4 = cv2.getTrackbarPos('minDist','circle')
 
-    red_hsv = {
-        "H_Lower" : red_hL,
-        "H_Higher" : red_hH,
-        "S_Lower" : red_sL,
-        "S_Higher" : red_sH,
-        "V_Lower" : red_vL,
-        "V_Higher" : red_vH,
+    object_hsv = {
+        "H_Lower" : object_hL,
+        "H_Higher" : object_hH,
+        "S_Lower" : object_sL,
+        "S_Higher" : object_sH,
+        "V_Lower" : object_vL,
+        "V_Higher" : object_vH,
     }
 
     mask_hsv = {
@@ -109,10 +140,10 @@ while(1):
         "param4" : param4,
     }
 
-    with open("red_hsv.json", "w") as outfile:
-        json.dump(red_hsv, outfile)
+    with open(object_hsv_path, "w") as outfile:
+        json.dump(object_hsv, outfile)
         
-    with open("mask_hsv.json", "w") as outfile:
+    with open(mask_hsv_path, "w") as outfile:
         json.dump(mask_hsv, outfile)
 
     with open("circle_params.json", "w") as outfile:
@@ -121,40 +152,40 @@ while(1):
     kernel = np.ones((7,7),"uint8")
 
     #red
-    red_LowerRegion = np.array([red_hL,red_sL,red_vL],np.uint8)
-    red_upperRegion = np.array([red_hH,red_sH,red_vH],np.uint8)
+    object_LowerRegion = np.array([object_hL,object_sL,object_vL],np.uint8)
+    object_upperRegion = np.array([object_hH,object_sH,object_vH],np.uint8)
 
-    red_object = cv2.inRange(hsv,red_LowerRegion,red_upperRegion)
+    object_mask = cv2.inRange(hsv,object_LowerRegion,object_upperRegion)
 
-    red_object = cv2.morphologyEx(red_object,cv2.MORPH_OPEN,kernel)
-    red_object = cv2.dilate(red_object,kernel,iterations=1)
+    object_mask = cv2.morphologyEx(object_mask,cv2.MORPH_OPEN,kernel)
+    object_mask = cv2.dilate(object_mask,kernel,iterations=1)
 
-    red_object = cv2.erode(red_object, None, iterations=2)
-    red_object = cv2.dilate(red_object, None, iterations=2)
+    object_mask = cv2.erode(object_mask, None, iterations=2)
+    object_mask = cv2.dilate(object_mask, None, iterations=2)
 
-    red_edges = cv2.Canny(red_object, 50, 150)
+    object_edges = cv2.Canny(object_mask, 50, 150)
 
     
     #mask
     mask_LowerRegion = np.array([mask_hL,mask_sL,mask_vL],np.uint8)
     mask_upperRegion = np.array([mask_hH,mask_sH,mask_vH],np.uint8)
 
-    mask_object = cv2.inRange(hsv,mask_LowerRegion,mask_upperRegion)
+    field_mask = cv2.inRange(hsv,mask_LowerRegion,mask_upperRegion)
 
-    mask_object = cv2.morphologyEx(mask_object,cv2.MORPH_OPEN,kernel)
-    mask_object = cv2.dilate(mask_object,kernel,iterations=1)
+    field_mask = cv2.morphologyEx(field_mask,cv2.MORPH_OPEN,kernel)
+    field_mask = cv2.dilate(field_mask,kernel,iterations=1)
 
-    mask_object = cv2.erode(mask_object, None, iterations=2)
-    mask_object = cv2.dilate(mask_object, None, iterations=2)
+    field_mask = cv2.erode(field_mask, None, iterations=2)
+    field_mask = cv2.dilate(field_mask, None, iterations=2)
 
-    # mask_edges = cv2.Canny(mask_object, 50, 150)
+    # mask_edges = cv2.Canny(field_mask, 50, 150)
 
-    circles = cv2.HoughCircles(red_edges, cv2.HOUGH_GRADIENT, param3, param4,
+    circles = cv2.HoughCircles(object_edges, cv2.HOUGH_GRADIENT, param3, param4,
                               param1=param1, param2=param2, minRadius=minRadius, maxRadius=maxRadius)
     
-    red_and_mask = cv2.bitwise_and(red_object, mask_object)
+    object_and_mask = cv2.bitwise_and(object_mask, field_mask)
 
-    output=cv2.bitwise_and(img, img, mask = red_object)
+    output=cv2.bitwise_and(img, img, mask = object_mask)
 
     if circles is not None:
         circles = np.uint16(np.around(circles))
@@ -166,7 +197,7 @@ while(1):
             cv2.circle(output, (i[0], i[1]), 2, (0, 0, 255), 3)
 
     cv2.imshow("Mask",output)
-    cv2.imshow("Edge", red_edges)
+    cv2.imshow("Edge", object_edges)
     # cv2.imshow("Ball detect ",circles)
 
     if cv2.waitKey(10) & 0xFF == ord('q'):
