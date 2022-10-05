@@ -1,10 +1,12 @@
+from time import sleep
 import cv2
 import numpy as np
 import json
+import sys
 import os.path
 from os import path
-
-camera = cv2.VideoCapture(0)
+import random as rng
+import skimage.morphology as morphology
 
 def nothing(x):
     pass
@@ -84,8 +86,27 @@ cv2.createTrackbar('param2','circle',circle_params['param2'],255,nothing)
 cv2.createTrackbar('dp','circle',circle_params['param3'],255,nothing)
 cv2.createTrackbar('minDist','circle',circle_params['param4'],255,nothing)
 
+#read image
+# img = cv2.imread("starbucks.jpg")
+# if img is None:
+#     sys.exit("Could not read the image.")
+
+# cv2.imshow("Display window", img)
+# k = cv2.waitKey(0)
+# if k == ord("s"):
+#     cv2.imwrite("starbucks.jpg", img)
+
+camera = cv2.VideoCapture(0)
+camera.set(cv2.CAP_PROP_FPS, 30)
+camera.set(cv2.CAP_PROP_FRAME_WIDTH, 200)
+camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 100)
+# camera.set(cv2.CAP_PROP_EXPOSURE, 200)
+
 while(1):
     _,img = camera.read()
+    if img is None:
+        sleep(0.1)
+        continue
     img = cv2.flip(img,1)
 
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -200,24 +221,62 @@ while(1):
             
     # object_and_field = cv2.bitwise_and(object_mask, field_mask)
     
+    field_edges = cv2.Canny(field_mask, 50, 150)
+    
     contours, hierarchy = cv2.findContours(field_mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     output_field=cv2.bitwise_and(img, img, mask = field_mask)
-    output_contours_original = cv2.drawContours(output_field, contours, -1, (0, 0, 255), 3)
+    output_contours_original = cv2.drawContours(output_field.copy(), contours.copy(), -1, (0, 0, 255), 3)
     
-    cnt = contours[0]
-    approx = cv2.approxPolyDP(cnt, 0.1*cv2.arcLength(cnt,True), True)
-    output_contours_approx = cv2.drawContours(output_field, approx, -1, (0, 255, 0), 3)
+    # cnt = contours[0]
+    # approx = cv2.approxPolyDP(cnt, 0.1*cv2.arcLength(cnt,True), True)
+    # output_contours_approx = cv2.drawContours(output_field.copy(), approx, -1, (0, 255, 0), 3)
     
-    hull = cv2.convexHull(cnt)
-    output_contours_hull = cv2.drawContours(output_field, hull, -1, (0, 255, 0), 3)
+    hull_list = []
+    for i in range(len(contours)):
+        hull = cv2.convexHull(contours[i])
+        hull_list.append(hull)
+    # Draw contours + hull results
+    drawing = np.zeros((field_edges.shape[0], field_edges.shape[1], 3), dtype=np.uint8)
+    for i in range(len(contours)):
+        color = (rng.randint(0,256), rng.randint(0,256), rng.randint(0,256))
+        # cv2.drawContours(drawing, contours, i, color)
+        cv2.drawContours(drawing, hull_list, i, color)
+        
+    # hull = cv2.convexHull(cnt)
+    # output_contours_hull = cv2.drawContours(output_field.copy(), hull, -1, (0, 255, 0), 3)
+    output_contours_hull = cv2.bitwise_or(output_field.copy(), drawing)
+    
+    enclosed_mask = np.zeros(img.shape, np.uint8)
+    enclosed_mask = cv2.drawContours(enclosed_mask, hull_list, -1, (255,255,255), -1)
+    # enclosed_mask = morphology.convex_hull_image(drawing)
+    output_enclosed_mask = cv2.bitwise_and(img, enclosed_mask)
+    
+    output_final = cv2.bitwise_and(img, enclosed_mask, mask = object_mask)
+    
+    final_edges = cv2.Canny(output_final, 50, 150)
 
-    # mask_edges = cv2.Canny(field_mask, 50, 150)    
+    circles = cv2.HoughCircles(final_edges, cv2.HOUGH_GRADIENT, param3, param4,
+                              param1=param1, param2=param2, minRadius=minRadius, maxRadius=maxRadius)
 
-    # cv2.imshow("Object",output_object)
+    # output_final=cv2.bitwise_and(img, img, mask = final_mask)
+    
+    if circles is not None:
+        circles = np.uint16(np.around(circles))
+        # print(circles)
+        for i in circles[0, :]:
+            # draw the outer circle
+            cv2.circle(output_final, (i[0], i[1]), i[2], (0, 255, 0), 2)
+            # draw the center of the circle
+            cv2.circle(output_final, (i[0], i[1]), 2, (0, 0, 255), 3)
+
+    cv2.imshow("Object",output_object)
+    cv2.imshow("Final",output_final)
     # cv2.imshow("Field",output_field)
-    cv2.imshow("Contours Original",output_contours_original)
-    cv2.imshow("Contours Approx",output_contours_original)
-    cv2.imshow("Contours Hull",output_contours_original)
+    # cv2.imshow("Contours Original",output_contours_original)
+    # cv2.imshow("Contours Approx",output_contours_approx)
+    cv2.imshow("Contours Hull",output_contours_hull)
+    # cv2.imshow("Enclosed Contours Hull",enclosed_mask)
+    cv2.imshow("Output Enclosed Contours Hull",output_enclosed_mask)
     # cv2.imshow("Canny", object_edges)
     # cv2.imshow("Original", img)
     # cv2.imshow("Ball detect ",circles)
