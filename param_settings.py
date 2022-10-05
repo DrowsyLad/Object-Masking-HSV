@@ -12,12 +12,12 @@ def nothing(x):
     pass
 
 hsv_empty = {
-    "H_Lower" : 0,
-    "H_Higher" : 0,
-    "S_Lower" : 0,
-    "S_Higher" : 0,
-    "V_Lower" : 0,
-    "V_Higher" : 0,
+    "H Lower" : 0,
+    "H Higher" : 0,
+    "S Lower" : 0,
+    "S Higher" : 0,
+    "V Lower" : 0,
+    "V Higher" : 0,
 }
 circle_empty = {
     "min_radius" : 1,
@@ -27,18 +27,18 @@ circle_empty = {
     "param3" : 1,
     "param4" : 1,
 }
-canny_empty = {
-    "min_radius" : 0,
-    "max_radius" : 0,
-    "param1" : 1,
-    "param2" : 1,
-    "param3" : 1,
-    "param4" : 1,
+transform_empty = {
+    "object_canny_param1" : 50,
+    "object_canny_param2" : 150,
+    "object_morph_kernel" : 7,
+    "field_canny_param1" : 50,
+    "field_canny_param2" : 150,
+    "field_morph_kernel" : 7,
 }
 object_hsv_path = 'object_hsv.json'
 field_hsv_path = 'field_hsv.json'
 circle_params_path = 'circle_params.json'
-canny_params_path = 'canny_params.json'
+transform_params_path = 'transform_params.json'
 
 if path.exists(object_hsv_path):
     with open(object_hsv_path, 'r') as openfile:
@@ -61,24 +61,35 @@ if path.exists(circle_params_path):
 else:
     circle_params = circle_empty
 
+if path.exists(transform_params_path):
+    with open(transform_params_path, 'r') as openfile:
+        transform_params = json.load(openfile)
+else:
+    transform_params = transform_empty
+
+window_width = 300
+window_height = 400
 
 cv2.namedWindow('hsv_object')
-cv2.createTrackbar('H Lower','hsv_object',object_hsv['H_Lower'],179,nothing)
-cv2.createTrackbar('H Higher','hsv_object',object_hsv['H_Higher'],179,nothing)
-cv2.createTrackbar('S Lower','hsv_object',object_hsv['S_Lower'],255,nothing)
-cv2.createTrackbar('S Higher','hsv_object',object_hsv['S_Higher'],255,nothing)
-cv2.createTrackbar('V Lower','hsv_object',object_hsv['V_Lower'],255,nothing)
-cv2.createTrackbar('V Higher','hsv_object',object_hsv['V_Higher'],255,nothing)
+cv2.resizeWindow('hsv_object', window_width, window_height)
+cv2.createTrackbar('H Lower','hsv_object',object_hsv['H Lower'],179,nothing)
+cv2.createTrackbar('H Higher','hsv_object',object_hsv['H Higher'],179,nothing)
+cv2.createTrackbar('S Lower','hsv_object',object_hsv['S Lower'],255,nothing)
+cv2.createTrackbar('S Higher','hsv_object',object_hsv['S Higher'],255,nothing)
+cv2.createTrackbar('V Lower','hsv_object',object_hsv['V Lower'],255,nothing)
+cv2.createTrackbar('V Higher','hsv_object',object_hsv['V Higher'],255,nothing)
 
 cv2.namedWindow('hsv_field')
-cv2.createTrackbar('H Lower','hsv_field',field_hsv['H_Lower'],179,nothing)
-cv2.createTrackbar('H Higher','hsv_field',field_hsv['H_Higher'],179,nothing)
-cv2.createTrackbar('S Lower','hsv_field',field_hsv['S_Lower'],255,nothing)
-cv2.createTrackbar('S Higher','hsv_field',field_hsv['S_Higher'],255,nothing)
-cv2.createTrackbar('V Lower','hsv_field',field_hsv['V_Lower'],255,nothing)
-cv2.createTrackbar('V Higher','hsv_field',field_hsv['V_Higher'],255,nothing)
+cv2.resizeWindow('hsv_field', window_width, window_height)
+cv2.createTrackbar('H Lower','hsv_field',field_hsv['H Lower'],179,nothing)
+cv2.createTrackbar('H Higher','hsv_field',field_hsv['H Higher'],179,nothing)
+cv2.createTrackbar('S Lower','hsv_field',field_hsv['S Lower'],255,nothing)
+cv2.createTrackbar('S Higher','hsv_field',field_hsv['S Higher'],255,nothing)
+cv2.createTrackbar('V Lower','hsv_field',field_hsv['V Lower'],255,nothing)
+cv2.createTrackbar('V Higher','hsv_field',field_hsv['V Higher'],255,nothing)
 
 cv2.namedWindow('circle')
+cv2.resizeWindow('circle', window_width, window_height)
 cv2.createTrackbar('Min Radius','circle',circle_params['min_radius'],255,nothing)
 cv2.createTrackbar('Max Radius','circle',circle_params['max_radius'],255,nothing)
 cv2.createTrackbar('param1','circle',circle_params['param1'],255,nothing)
@@ -86,6 +97,17 @@ cv2.createTrackbar('param2','circle',circle_params['param2'],255,nothing)
 cv2.createTrackbar('dp','circle',circle_params['param3'],255,nothing)
 cv2.createTrackbar('minDist','circle',circle_params['param4'],255,nothing)
 
+cv2.namedWindow('transform')
+cv2.resizeWindow('transform', window_width, window_height)
+cv2.createTrackbar('Object canny param1','transform',transform_params['object_canny_param1'],255,nothing)
+cv2.createTrackbar('Object canny param2','transform',transform_params['object_canny_param2'],255,nothing)
+cv2.createTrackbar('Object morph kernel','transform',transform_params['object_morph_kernel'],255,nothing)
+cv2.createTrackbar('Field canny param1','transform',transform_params['field_canny_param1'],255,nothing)
+cv2.createTrackbar('Field canny param2','transform',transform_params['field_canny_param2'],255,nothing)
+cv2.createTrackbar('Field morph kernel','transform',transform_params['field_morph_kernel'],255,nothing)
+
+# cv2.namedWindow('test')
+# cv2.resizeWindow('test', 320, 240)
 #read image
 # img = cv2.imread("starbucks.jpg")
 # if img is None:
@@ -98,8 +120,8 @@ cv2.createTrackbar('minDist','circle',circle_params['param4'],255,nothing)
 
 camera = cv2.VideoCapture(0)
 camera.set(cv2.CAP_PROP_FPS, 30)
-camera.set(cv2.CAP_PROP_FRAME_WIDTH, 200)
-camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 100)
+camera.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
+camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
 # camera.set(cv2.CAP_PROP_EXPOSURE, 200)
 
 while(1):
@@ -112,19 +134,19 @@ while(1):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     #object
-    object_hL = cv2.getTrackbarPos('H Lower','hsv_object')
-    object_hH = cv2.getTrackbarPos('H Higher','hsv_object')
-    object_sL = cv2.getTrackbarPos('S Lower','hsv_object')
-    object_sH = cv2.getTrackbarPos('S Higher','hsv_object')
-    object_vL = cv2.getTrackbarPos('V Lower','hsv_object')
-    object_vH = cv2.getTrackbarPos('V Higher','hsv_object')
+    object_hsv['H Lower'] = cv2.getTrackbarPos('H Lower','hsv_object')
+    object_hsv['H Higher'] = cv2.getTrackbarPos('H Higher','hsv_object')
+    object_hsv['S Lower'] = cv2.getTrackbarPos('S Lower','hsv_object')
+    object_hsv['S Higher'] = cv2.getTrackbarPos('S Higher','hsv_object')
+    object_hsv['V Lower'] = cv2.getTrackbarPos('V Lower','hsv_object')
+    object_hsv['V Higher'] = cv2.getTrackbarPos('V Higher','hsv_object')
     
-    mask_hL = cv2.getTrackbarPos('H Lower','hsv_field')
-    mask_hH = cv2.getTrackbarPos('H Higher','hsv_field')
-    mask_sL = cv2.getTrackbarPos('S Lower','hsv_field')
-    mask_sH = cv2.getTrackbarPos('S Higher','hsv_field')
-    mask_vL = cv2.getTrackbarPos('V Lower','hsv_field')
-    mask_vH = cv2.getTrackbarPos('V Higher','hsv_field')
+    field_hsv['H Lower'] = cv2.getTrackbarPos('H Lower','hsv_field')
+    field_hsv['H Higher'] = cv2.getTrackbarPos('H Higher','hsv_field')
+    field_hsv['S Lower'] = cv2.getTrackbarPos('S Lower','hsv_field')
+    field_hsv['S Higher'] = cv2.getTrackbarPos('S Higher','hsv_field')
+    field_hsv['V Lower'] = cv2.getTrackbarPos('V Lower','hsv_field')
+    field_hsv['V Higher'] = cv2.getTrackbarPos('V Higher','hsv_field')
     
     minRadius = cv2.getTrackbarPos('Min Radius','circle')
     maxRadius = cv2.getTrackbarPos('Max Radius','circle')
@@ -141,23 +163,25 @@ while(1):
     if param4 == 0:
         param4 = 1
 
-    object_hsv = {
-        "H_Lower" : object_hL,
-        "H_Higher" : object_hH,
-        "S_Lower" : object_sL,
-        "S_Higher" : object_sH,
-        "V_Lower" : object_vL,
-        "V_Higher" : object_vH,
-    }
+    transform_params['object_canny_param1'] = cv2.getTrackbarPos('Object canny param1','transform')
+    if transform_params['object_canny_param1'] == 0:
+        transform_params['object_canny_param1'] = 1
+    transform_params['object_canny_param2'] = cv2.getTrackbarPos('Object canny param2','transform')
+    if transform_params['object_canny_param2'] == 0:
+        transform_params['object_canny_param2'] = 1
+    transform_params['object_morph_kernel'] = cv2.getTrackbarPos('Object morph kernel','transform')
+    if transform_params['object_morph_kernel'] % 2:
+        transform_params['object_morph_kernel'] += 1
 
-    field_hsv = {
-        "H_Lower" : mask_hL,
-        "H_Higher" : mask_hH,
-        "S_Lower" : mask_sL,
-        "S_Higher" : mask_sH,
-        "V_Lower" : mask_vL,
-        "V_Higher" : mask_vH,
-    }
+    transform_params['field_canny_param1'] = cv2.getTrackbarPos('Field canny param1','transform')
+    if transform_params['field_canny_param1'] == 0:
+        transform_params['field_canny_param1'] = 1
+    transform_params['field_canny_param2'] = cv2.getTrackbarPos('Field canny param2','transform')
+    if transform_params['field_canny_param2'] == 0:
+        transform_params['field_canny_param2'] = 1
+    transform_params['field_morph_kernel'] = cv2.getTrackbarPos('Field morph kernel','transform')
+    if transform_params['field_morph_kernel'] % 2:
+        transform_params['field_morph_kernel'] += 1
 
     circle_params = {
         "min_radius" : minRadius,
@@ -177,21 +201,30 @@ while(1):
     with open(circle_params_path, "w") as outfile:
         json.dump(circle_params, outfile)
 
-    kernel = np.ones((7,7),"uint8")
+    with open(transform_params_path, "w") as outfile:
+        json.dump(transform_params, outfile)
+
+    object_kernel = np.ones((transform_params['object_morph_kernel'],transform_params['object_morph_kernel']),"uint8")
 
     #red
-    object_LowerRegion = np.array([object_hL,object_sL,object_vL],np.uint8)
-    object_upperRegion = np.array([object_hH,object_sH,object_vH],np.uint8)
+    object_LowerRegion = np.array([object_hsv['H Lower'],object_hsv['S Lower'],object_hsv['V Lower']],np.uint8)
+    object_upperRegion = np.array([object_hsv['H Higher'],object_hsv['S Higher'],object_hsv['V Higher']],np.uint8)
 
-    object_mask = cv2.inRange(hsv,object_LowerRegion,object_upperRegion)
+    #morphological operations
+    object_mask = cv2.morphologyEx(hsv,cv2.MORPH_OPEN, object_kernel)
+    object_mask = cv2.morphologyEx(hsv,cv2.MORPH_CLOSE, object_kernel)
+    
+    #sub: dilate-erode
+    # object_mask = cv2.dilate(object_mask, object_kernel,iterations=1)
+    # object_mask = cv2.erode(object_mask, object_kernel, iterations=2)
 
-    object_mask = cv2.morphologyEx(object_mask,cv2.MORPH_OPEN,kernel)
-    object_mask = cv2.dilate(object_mask,kernel,iterations=1)
+    object_mask = cv2.inRange(object_mask,object_LowerRegion,object_upperRegion)
 
-    # object_mask = cv2.erode(object_mask, None, iterations=2)
-    # object_mask = cv2.dilate(object_mask, None, iterations=2)
-
-    object_edges = cv2.Canny(object_mask, 50, 150)
+    #morphological operations
+    # object_mask = cv2.morphologyEx(hsv,cv2.MORPH_OPEN, object_kernel)
+    # object_mask = cv2.morphologyEx(hsv,cv2.MORPH_CLOSE, object_kernel)
+    
+    object_edges = cv2.Canny(object_mask, transform_params['object_canny_param1'], transform_params['object_canny_param2'])
 
     circles = cv2.HoughCircles(object_edges, cv2.HOUGH_GRADIENT, param3, param4,
                               param1=param1, param2=param2, minRadius=minRadius, maxRadius=maxRadius)
@@ -208,20 +241,22 @@ while(1):
             cv2.circle(output_object, (i[0], i[1]), 2, (0, 0, 255), 3)
     
     #mask
-    mask_LowerRegion = np.array([mask_hL,mask_sL,mask_vL],np.uint8)
-    mask_upperRegion = np.array([mask_hH,mask_sH,mask_vH],np.uint8)
+    field_LowerRegion = np.array([field_hsv['H Lower'],field_hsv['S Lower'],field_hsv['V Lower']],np.uint8)
+    field_upperRegion = np.array([field_hsv['H Higher'],field_hsv['S Higher'],field_hsv['V Higher']],np.uint8)
 
-    field_mask = cv2.inRange(hsv,mask_LowerRegion,mask_upperRegion)
+    field_mask = cv2.inRange(hsv,field_LowerRegion,field_upperRegion)
 
-    field_mask = cv2.morphologyEx(field_mask,cv2.MORPH_OPEN,kernel)
-    field_mask = cv2.dilate(field_mask,kernel,iterations=1)
-
-    # field_mask = cv2.erode(field_mask, None, iterations=2)
-    # field_mask = cv2.dilate(field_mask, None, iterations=2)
-            
-    # object_and_field = cv2.bitwise_and(object_mask, field_mask)
+    field_kernel = np.ones((transform_params['field_morph_kernel'],transform_params['field_morph_kernel']),"uint8")
     
-    field_edges = cv2.Canny(field_mask, 50, 150)
+    #morphological operations
+    field_mask = cv2.morphologyEx(field_mask,cv2.MORPH_OPEN, field_kernel)
+    field_mask = cv2.morphologyEx(field_mask,cv2.MORPH_CLOSE, field_kernel)
+    
+    #sub: dilate-erode
+    # field_mask = cv2.dilate(field_mask, field_kernel,iterations=1)
+    # field_mask = cv2.erode(field_mask, field_kernel, iterations=2)
+    
+    field_edges = cv2.Canny(field_mask, transform_params['field_canny_param1'], transform_params['field_canny_param2'])
     
     contours, hierarchy = cv2.findContours(field_mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     output_field=cv2.bitwise_and(img, img, mask = field_mask)
@@ -277,7 +312,8 @@ while(1):
     cv2.imshow("Contours Hull",output_contours_hull)
     # cv2.imshow("Enclosed Contours Hull",enclosed_mask)
     cv2.imshow("Output Enclosed Contours Hull",output_enclosed_mask)
-    # cv2.imshow("Canny", object_edges)
+    cv2.imshow("Canny", object_edges)
+    cv2.imshow("Field Canny", field_edges)
     # cv2.imshow("Original", img)
     # cv2.imshow("Ball detect ",circles)
 
